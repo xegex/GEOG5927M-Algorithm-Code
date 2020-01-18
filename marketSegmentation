@@ -1,0 +1,447 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Aug  6 13:08:13 2019
+
+@author: xegex
+"""
+
+import os
+import csv
+
+from matplotlib import pyplot as plt
+import numpy as np
+import pandas as pd
+#path to data containing folder here
+os.chdir('C:\\Users\\xegex\\Documents')
+
+
+dataset = pd.read_csv('simulated_oac_age_sex.csv')
+for i in dataset:
+    print(i)
+colNames = []
+originalPeople = dataset['person_id']
+j=0
+for i in dataset:
+    if j != 1:
+        colNames.append(i)
+    j+=1
+colNames[0] = 'person_id'
+pId = dataset['Unnamed: 0']
+destCountry = dataset['dest_airport_country']
+destCountryNames = []
+for i in destCountry:
+    if i not in destCountryNames:
+        destCountryNames.append(i)
+destCity = dataset['dest_airport_city']
+destCityNames = []
+for i in destCity:
+    if i not in destCityNames:
+        destCityNames.append(i)
+ageBandOG = dataset['age_band']
+income = dataset['household_income']
+satisfaction = dataset['satisfaction_overall']
+children = dataset['number_children']
+area = dataset['supergroup_name']
+sex = dataset['sex']
+ageBand = ['a24under', 'a25to34', 'a35to49', 'a50to64', 'a65over']
+incomeLabels = ['0-10K', '11-15K',  '16-20K', '21-25K', '26-30K', '31-35K', '36-40K',
+                '41-50K', '51-60K','61-70K', '71-80K', '81K Plus']
+satisfactionLabels =['1_poor', '2_fair', '3_good', '4_excellent']
+childrenLabels = ['0','1','2','3','4']
+areaLabels =['Hard-Pressed Living', 'Suburbanites', 'Urbanites', 'Constrained City Dwellers',
+             'Rural Residents', 'Multicultural Metropolitans', 'Cosmopolitans', 'Ethnicity Central']
+sexLabels = ['f','m']
+#female binary
+#male binary
+#area binaries?
+#ebverything else fine as scale
+#cols =[id, maleBinary, femaleBinary, ageBand, incomeBand, satisfaction, children]
+relData = [sex, ageBandOG, income, satisfaction, children,area,originalPeople]
+q0,w0,e0,r0,t0,y0,u0,i0,o0,p0,a0,s0,d0,f0,g0,h0,j0,k0,l0,z0,x0,c0,v0,b0,n0 = [],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]
+#comment out the below when doing dest countries
+q1,w1,e1,r1,t1,y1,u1,i1,o1,p1,a1,s1,d1,f1,g1,h1,j1,k1,l1,z1,x1,c1,v1,b1,n1 = [],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]
+q2,w2,e2,r2,t2,y2,u2,i2,o2,p2,a2,s2,d2,f2,g2,h2,j2,k2,l2,z2,x2,c2,v2,b2 = [],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]
+#plot per destination [country]
+destCountryIndices = [q0,w0,e0,r0,t0,y0,u0,i0,o0,p0,a0,s0,d0,f0,g0,h0,j0,k0,l0,z0,x0,c0,v0,b0,n0]
+#destCityIndices = [q0,w0,e0,r0,t0,y0,u0,i0,o0,p0,a0,s0,d0,f0,g0,h0,j0,k0,l0,z0,x0,c0,v0,b0,n0,
+ #                  q1,w1,e1,r1,t1,y1,u1,i1,o1,p1,a1,s1,d1,f1,g1,h1,j1,k1,l1,z1,x1,c1,v1,b1,n1,
+  #                 q2,w2,e2,r2,t2,y2,u2,i2,o2,p2,a2,s2,d2,f2,g2,h2,j2,k2,l2,z2,x2,c2,v2,b2]
+dataArray = np.zeros((9,320596),dtype='int')
+
+for i in range(len(relData)):
+    currData = relData[i]
+    for j in range(len(currData)):
+        #sex
+        if i == 0:
+            dataArray[i][j] = j
+            #destCountryIndices[destCountryNames.index(destCountry[j])].append(j)
+            knownInc = income[j]
+            if knownInc in incomeLabels:
+                #to only check people that entered an income
+                if incomeLabels.index(knownInc) > 0:
+                    #destCityIndices[destCityNames.index(destCity[j])].append(j)
+                    destCountryIndices[destCountryNames.index(destCountry[j])].append(j)
+            #if male
+            if currData[j] == 'm':
+                dataArray[1][j] = 1
+            # else female
+            else:
+                dataArray[2][j] = 2
+        #ageband
+        elif i == 1:
+            dataArray[3][j] = ageBand.index(currData[j])
+        #
+        elif i == 2:
+            dataArray[4][j] = incomeLabels.index(currData[j])/2 if currData[j] in incomeLabels else -1
+        elif i ==3:
+            dataArray[5][j] = satisfactionLabels.index(currData[j])
+        elif i == 4:
+            #This is 1 for any number child or leave as 0 for no child
+            if int(currData[j]) > 0:
+                dataArray[6][j] = 1
+        elif i == 5:
+            dataArray[7][j] = areaLabels.index(currData[j])
+        elif i == 6:
+            dataArray[8][j] = originalPeople[j]
+   
+dataArray.shape 
+dataArray[0][:1000]
+dataArray[6][100:200]
+dataArray[8]
+children[101] == 1
+from sklearn.cluster import KMeans 
+from matplotlib import pyplot as plt
+from sklearn.decomposition import PCA
+winners =[]
+winnersKSize=[]
+winnersInertia=[]
+#for i in range(len(destCountryIndices)):
+i=2
+k=10
+for kSize in range(2,4):    
+    for i in range(len(destCityIndices)):
+        X = []
+        numPop = len(destCityIndices[i])
+        #for k in range(len(destCountryIndices[i])):
+            #X.append([j[destCountryIndices[i][k]] for j in dataArray[1:]])
+        if numPop > 4000:
+            for k in range(numPop):
+                X.append([j[destCityIndices[i][k]] for j in dataArray[1:]]) 
+            pca = PCA(n_components=2)
+            pca.fit(X)
+            tDat = pca.transform(X)
+            #print(tDat)
+            
+            #print(pca.explained_variance_ratio_)
+            #print(pca.singular_values_)   
+            plt.scatter([i[0] for i in tDat], [j[1] for j in tDat])#,[k[2] for k in tDat])    
+            plt.show()
+             
+            kmeans = KMeans(n_clusters=kSize).fit(tDat)
+            kmeans.labels_
+            kmeans.cluster_centers_
+            print(numPop,destCityNames[i],kmeans.inertia_/numPop)
+            if kmeans.inertia_/numPop < 2:
+                winners.append(destCityNames[i])
+                winnersKSize.append(kSize)
+                winnersInertia.append(kmeans.inertia_/numPop)
+            
+            X=np.array(X)
+            X = X[X[:,3].argsort()]
+            XT = np.array(X).transpose()
+            #for xi in XT:
+            #    plt.plot(xi)
+            #    plt.show()
+            
+print('winners',winners)
+print('winnersKSize',winnersKSize)
+print('winnersInertia',winnersInertia)
+               
+#Current selection for Bridgetown 403 crew [prob just roll with this uness really sophisticated visualisation]
+ 
+cityIndex = destCountryNames.index("Palma Mallorca")
+#cityIndex = destCityNames.index("Bridgetown")
+numPop = len(destCityIndices[cityIndex])
+X=[]
+for k in range(numPop):
+    X.append([j[destCityIndices[cityIndex][k]] for j in dataArray[2:]])
+X=np.array(X)
+#Gender
+from sklearn.preprocessing import StandardScaler
+
+categories = ["sex", "ageBandOG", "income", "satisfaction", "children", "area"]#original person final idx
+
+def getHomogPops():
+    inertias = []
+    popSizes = []
+    refinedPops = []
+    validCities = []
+    uniquePop = []
+    kSize = 1
+    it = 0
+    for i in destCountryNames:
+        cityIndex = it
+        chosenVals, popSize, homogPop = refineData(cityIndex)
+        if popSize > 0:
+            if i == "Spain":
+                X=homogPop.transpose()
+                X = X[X[:,5].argsort()]
+                XT = np.array(X).transpose()
+                xit = 0
+                for xi in XT:
+                    if xit < 6:
+                        plt.plot(xi)
+                        plt.title(categories[xit])
+                        plt.show() 
+                    xit+=1
+            
+            #print(i, popSize, chosenVals)
+            homogPopFit = homogPop[:5].transpose()
+            #pca = PCA(n_components=kSize)
+            #X_std = StandardScaler().fit_transform(homogPop)
+            #pca.fit(homogPop)
+            #tDat = pca.fit_transform(X_std)
+            #tDat = pca.transform(homogPop) 
+            #plt.scatter([i[0] for i in tDat], [j[1] for j in tDat])#,[k[2] for k in tDat])    
+            #plt.show()
+            kmeans = KMeans(n_clusters=kSize).fit(homogPopFit)
+            kmeans.labels_
+            kmeans.cluster_centers_
+            #print(kmeans.inertia_ // popSize)
+            inertias.append(kmeans.inertia_ / popSize)
+            popSizes.append(popSize)
+            homogPop = homogPop.transpose()
+            refinedPops.append(homogPop)
+            validCities.append(i)
+            uniqueIDs = [j[6] for j in homogPop]
+            numUniq = []
+            for ui in uniqueIDs:
+                if ui not in numUniq:
+                    numUniq.append(ui)
+            uniquePop.append(len(numUniq))
+        it += 1
+    return inertias, popSizes, refinedPops, validCities, uniquePop
+
+def refineData(cityIndex):
+    #This will just go with whichever refienement results in biggest remaining pop (after cutting to hogoneity on latest category)
+    numPop = len(destCountryIndices[cityIndex])
+    X=[]
+    for k in range(numPop):
+        X.append([j[destCountryIndices[cityIndex][k]] for j in dataArray[2:]])
+    X=np.array(X)
+    chosenVals = []
+    #hacky hardCode range of possible vals for each category
+    vals = [2,5,6,5]
+    idxs = [0,1,2,4]
+    vals = [12,5,5,2]
+    idxs = [2,1,4,0]
+    #vals = []
+    X=X.transpose()
+    bestLength = numPop
+    it = 0
+    for val in vals:
+        bestLength = 0
+        bestVal = 0
+        bestCut = []
+        for i in range(val):
+            if(len(X)) > 0:
+                newCut, length = sortAndDelete(X,idxs[it],i)
+                if length > bestLength:
+                    bestLength = length
+                    bestVal = i
+                    bestCut = newCut
+        X = bestCut
+        chosenVals.append(bestVal)
+        it += 1
+    return chosenVals,bestLength,X #final pop after cutting down on the categories
+        
+def sortAndDelete(X,idx, val):
+    #idx == 0 or idx == 1 when sorting by gender, which will always do first for hackiness
+    length = 0
+    newX = []
+    X=X.transpose()
+    X = X[X[:,idx].argsort()]
+    XT = np.array(X).transpose()  
+    if val in XT[idx]:
+        startInd = np.where(XT[idx]==val)[0][0]
+        endInd = np.where(XT[idx]==val)[0][len(np.where(XT[idx]==val)[0])-1]
+        length = endInd - startInd
+        i =0    
+        for xi in XT:
+            newX.append(XT[i][startInd:endInd])
+            i+=1
+    return np.array(newX), length
+
+inertias, popSizes, refinedPops, validCities, uniquePop = getHomogPops()   
+plt.scatter(x=inertias,y=popSizes,marker = 'x', c = 'blue')
+ax=plt.subplot()
+ax.tick_params(axis='y',labelcolor='blue')
+ax.set_title('Homogeneity & Subpopulation Size by Destination Country')
+ax.set_xlabel('Mean SS distance from centroid')
+ax.set_ylabel('Simulated Subpopulation Size',color='blue')
+plt.savefig('RefinedCountryPops')
+#plt.show()
+sum(popSizes)
+ax=plt.subplot()
+ax2 = ax.twinx()
+ax2.tick_params(labelcolor='red')
+ax2.scatter(x=inertias,y=uniquePop,edgecolor='red',marker = 'o', c = 'none')
+ax.set_title('Homogeneity & Subpopulation Size by Destination Country')
+ax.set_xlabel('Mean distance from centroid')
+ax2.set_ylabel('Number Unique People',color = 'red')
+ax2.set_ylim([None,115])
+plt.savefig('RefinedCountryPops')
+plt.show()
+
+it = 0
+for i in inertias:
+    if i == 0:
+        print(popSizes[it], validCities[it], it)
+    it +=1
+
+print(validCities[np.argmax(popSizes)])
+
+categories = ["sex", "ageBandOG", "income", "satisfaction", "children", "area"]
+
+spainPop = refinedPops[0]
+
+satisfaction = [j[3] for j in spainPop]
+area = [j[5] for j in spainPop]
+sats = [0,0,0,0]
+for i in satisfaction:
+    sats[i]+=1
+ars = [0,0,0,0,0,0]
+for i in area:
+    ars[i] += 1
+plt.bar(x=['0','1','2','3'],height=sats,color='grey')
+ax=plt.subplot()
+ax.set_title("Satisfaction of Refined Subpopulation")
+ax.set_ylabel("Subpopulation Size")
+#ax.set_xlabel("Degree of Satisfaction")
+plt.savefig("SPainSatisfaction")
+#plt.show()
+
+ax=plt.subplot()
+ax.set_title("Satisfaction and Living Areas of Refined Subpopulation")
+plt.xticks(rotation=45)
+ax.set_ylabel("Subpopulation Size")
+plt.bar(x=['Hard-Pressed Living', 'Suburbanites', 'Urbanites', 'Constrained City Dwellers',
+             'Rural Residents', 'Multicultural Metropolitans']
+,height=ars,color ='green')
+plt.tight_layout()
+fig = plt.gcf()
+fig.set_size_inches(8.5, 6.5)
+plt.savefig("SpainAreas")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+idx = 0
+val = 1
+X = X[X[:,idx].argsort()]
+XT = np.array(X).transpose()  
+startInd = np.where(XT[idx]==val)[0][0]
+endInd = np.where(XT[idx]==val)[0][len(np.where(XT[idx]==val)[0])-1]
+newX=[]
+i =0
+print("nextLot")
+
+for xi in XT:
+    newX.append(XT[i][startInd:endInd])
+    plt.plot(newX[i])
+    #plt.plot(xi[startInd:])
+    plt.show()
+    i+=1
+        
+print("nextLot")
+#Age
+idx = 2
+val = 2
+XT = np.array(newX).transpose()
+XT = XT[XT[:,idx].argsort()]
+XT = XT.transpose()    
+startInd = np.where(XT[idx]==val)[0][0]
+endInd = np.where(XT[idx]==val)[0][len(np.where(XT[idx]==val)[0])-1]
+newX=[]
+i =0
+print("nextLot")
+
+for xi in XT:
+    newX.append(XT[i][startInd:endInd])
+    plt.plot(newX[i])
+    #plt.plot(xi[startInd:])
+    plt.show()
+    i+=1
+
+   
+print("nextLot")
+#Income
+idx = 3
+value = 1
+XT = np.array(newX).transpose()
+XT = XT[XT[:,idx].argsort()]
+XT = XT.transpose()    
+startInd = np.where(XT[idx]==value)[0][0]
+endInd = np.where(XT[idx]==value)[0][len(np.where(XT[idx]==value)[0])-1]
+newX=[]
+i =0
+print("nextLot")
+
+for xi in XT:
+    newX.append(XT[i][startInd:endInd])
+    plt.plot(newX[i])
+    #plt.plot(xi[startInd:])
+    plt.show()
+    i+=1
+
+XT = np.array(newX).transpose()
+XT = XT[XT[:,5].argsort()]
+XT = XT.transpose()
+for xi in XT:
+    #xi=xi[startInd:]
+    plt.plot(xi)
+    #plt.plot(xi[startInd:])
+    #plt.show()    
+       
+    
+    
+
+def ClusterInds(clustNum, labels_array): #numpy 
+    return np.where(labels_array == clustNum)[0]
+
+for g in range(3):
+    test = ClusterInds(g,kmeans.labels_) 
+    print(len(test), g)
+
+    Y = (X[test])
+    pca = PCA(n_components=2)
+    print(pca.fit(Y))
+    
+    tDat = pca.transform(Y)
+    #print(tDat)
+    
+    #print(pca.explained_variance_ratio_)
+    #print(pca.singular_values_)   
+    plt.scatter([i[0] for i in tDat], [j[1] for j in tDat])#,[k[2] for k in tDat])    
+    plt.show()
+#Get popSize and variance of individual clusters
+
+#XT.shape
+#Maldives = 21
+#pisa PSA seems like good candidate
+#above is wrong - I have indices correctly, but need to pull out the whole rows from dataArray
+#first 403 from bridgetown (i.e., all those of bottom ageband)
+np.array(X).shape
+dataArray[1:][1].shape
+[print(i[10]) for i in dataArray]
